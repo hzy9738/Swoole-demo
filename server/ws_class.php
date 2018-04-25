@@ -6,8 +6,14 @@ class Ws{
     public $ws = null;
     public function __construct(){
         $this->ws = new swoole_websocket_server(self::HOST,self::PORT);
+        $this->ws->set([
+            'worker_num' => 2,
+            'task_worker_num' => 2
+        ]);
         $this->ws->on('open',[$this,'onOpen']);
         $this->ws->on('message',[$this,'onMessage']);
+        $this->ws->on('task',[$this,'onTask']);
+        $this->ws->on('finish',[$this,'onFinish']);
         $this->ws->on('close',[$this,'onClose']);
 
         $this->ws->start();
@@ -29,7 +35,37 @@ class Ws{
      */
     public function onMessage($server,$frame){
         echo "客户端 {$frame->fd} 发送信息 ：{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}\n";
+        $data = [
+            'fd' => $frame->fd
+        ];
+        $server->task($data);
         $server->push($frame->fd, "Server 已经连接上了");
+    }
+
+    /**
+     * 监听task任务
+     * @param $server
+     * @param $taskId
+     * @param $workerId
+     * @param $data
+     * @return string
+     */
+    public function onTask($server,$taskId,$workerId,$data){
+        $data['taskId'] = $taskId;
+        $data['workerId'] = $workerId;
+        print_r($data);
+        sleep(10);
+        return 'task 任务 finish';
+    }
+
+    /**
+     * @param $server
+     * @param $taskId
+     * @param $data
+     */
+    public function onFinish($server,$taskId,$data){
+        echo "taskId :{$taskId}\n";
+        echo "finish-success :{$data}\n";
     }
 
     /**
