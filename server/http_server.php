@@ -10,7 +10,7 @@ $http->set([
 
 $http->on("request", function ($request, $response) {
 //    $response->header("Content-Type", "text/plain");
-    $get = $request->get();   // get参数
+    $get = $request->get;   // get参数
     $response->cookie('cook','cookValue',time()+1800);  // 设置cookie
     $response->end("<h1>Hello World</h1>");
 });
